@@ -586,9 +586,9 @@ uninstall() {
     $KCMD delete crd servicemonitors.monitoring.coreos.com --ignore-not-found || true
   fi
 
-  if [[ "${USE_MINIKUBE}" == "true" ]]; then
-    log_info "🗑️ Deleting Minikube hostPath PV (${MODEL_PV_NAME})..."
-    $KCMD delete pv "${MODEL_PV_NAME}" --ignore-not-found || true
+  if [[ "${USE_MINIKUBE}" == "true" || "$(kubectl config current-context 2>/dev/null)" == "minikube" ]]; then
+    log_info "🗑️ Minikube context found; deleting hostPath PV (${MODEL_PV_NAME})"
+    kubectl delete pv "${MODEL_PV_NAME}" --ignore-not-found || true
   fi
 
   log_info "🗑️ Deleting ClusterRoleBinding llm-d"
