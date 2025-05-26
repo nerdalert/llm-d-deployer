@@ -46,7 +46,7 @@ For GPU support, see the Minikube documentation as there are a couple of command
 
 - This can be run on a minimum ec2 node type [g6e.12xlarge](https://aws.amazon.com/ec2/instance-types/g6e/) (4xL40S 48GB but only 2 are used by default) to
 infer the model `meta-llama/Llama-3.2-3B-Instruct` that will get spun up.
-- You can also be run on a small [g6e.2xlarge](https://aws.amazon.com/ec2/instance-types/g6e/) with 1xL4 with a small model where both the prefill and
+- You can also be run on a small [g6.2xlarge](https://aws.amazon.com/ec2/instance-types/g6/) with 1xL4 with a small model where both the prefill and
 decode pods share the single GPU. This is useful for a quick deployment to familiarize yourself with the project or
 for development/CI purposes. See the [Run on a Single GPU](#run-on-a-single-gpu) section for deploying.
 
@@ -124,7 +124,7 @@ export HF_TOKEN="your-token"
 
 ### Run on a Single GPU
 
-If you want to run on a single GPU such as [g6e.2xlarge](https://aws.amazon.com/ec2/instance-types/g6e/) with a 1xL4,
+If you want to run on a single GPU such as [g6.2xlarge](https://aws.amazon.com/ec2/instance-types/g6/) with a 1xL4,
 load the example values file that is tuned to fit on the 24GB GPU memory available. The models and vLLM flags in the
 configuration files can be customized to be however you like. The following loads the base configuration with
 [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B).
@@ -135,11 +135,13 @@ export HF_TOKEN="your-token"
 ```
 
 If you want to run both prefill and decode pods, use the following values file that will spin up both pods
-on a 1xL4 (g6e.2xlarge) node on your minikube cluster.
+on a 1xL4 (g6.2xlarge) node on your minikube cluster. In this scenario, we are offloading GPU memory to
+RAM in order to squeeze the initial model loading memory spikes. You will likely need to disable metrics to
+reduce memory pressure on a g6.2xlarge with 32GB of RAM. You can monitor available memory with the `free -h` command.
 
 ```bash
 export HF_TOKEN="your-token"
-./llmd-installer.sh --minikube --values-file examples/gpt2-e2e-tiny-minikube.yaml
+./llmd-installer.sh --minikube --values-file examples/pd-nixl/slim/pd-nixl-slim.yaml --disable-metrics-collection
 ```
 
 ### Customize your deployment
@@ -170,7 +172,9 @@ retries, and metrics. All calls to `/v1/models` and `/v1/completions` flow throu
 # 1) Grab the Minikube VM IP and the NodePort that the gateway is listening on
 MINIKUBE_IP=$(minikube ip)
 NODEPORT=$(kubectl get svc llm-d-inference-gateway -n llm-d -o jsonpath='{.spec.ports[0].nodePort}')
-MODEL_ID=<INSERT_MODEL_NAME e.g. meta-llama/Llama-3.2-3B-Instruct, openai-community/gpt2, etc>
+MODEL_ID=<INSERT_MODEL_NAME e.g. meta-llama/Llama-3.2-3B-Instruct, Qwen/Qwen3-0.6B, etc>
+# List the serving model, if unsure what the model id is
+curl -s http://$MINIKUBE_IP:$NODEPORT/v1/models
 # 2) Curl the same completion endpoint on that high-numbered port:
 curl -X POST http://$MINIKUBE_IP:$NODEPORT/v1/completions \
   -H 'accept: application/json' \
