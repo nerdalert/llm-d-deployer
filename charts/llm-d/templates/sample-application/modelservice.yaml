@@ -33,12 +33,16 @@ spec:
       resources: {{ .Values.sampleApplication.resources | toYaml | nindent 8 }}
       env:
       {{- if eq (include "sampleApplication.modelArtifactType" . ) "hf" }}
-      - name: HF_TOKEN
-        valueFrom:
-          secretKeyRef:
-            name: {{ .Values.sampleApplication.model.auth.hfToken.name }}
-            key: {{ .Values.sampleApplication.model.auth.hfToken.key }}
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.sampleApplication.model.auth.hfToken.name }}
+              key: {{ .Values.sampleApplication.model.auth.hfToken.key }}
       {{- end }}
+      {{- if .Values.sampleApplication.decode.env }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.sampleApplication.decode.env "context" $) | nindent 6 }}
+      {{- end }}
+
   prefill:
     replicas: {{ .Values.sampleApplication.prefill.replicas }}
     containers:
@@ -52,11 +56,14 @@ spec:
       resources: {{ .Values.sampleApplication.resources | toYaml | nindent 8 }}
       env:
       {{- if eq (include "sampleApplication.modelArtifactType" . ) "hf" }}
-      - name: HF_TOKEN
-        valueFrom:
-          secretKeyRef:
-            name: {{ .Values.sampleApplication.model.auth.hfToken.name }}
-            key: {{ .Values.sampleApplication.model.auth.hfToken.key }}
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.sampleApplication.model.auth.hfToken.name }}
+              key: {{ .Values.sampleApplication.model.auth.hfToken.key }}
+      {{- end }}
+      {{- if .Values.sampleApplication.prefill.env }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.sampleApplication.prefill.env "context" $) | nindent 6 }}
       {{- end }}
   endpointPicker:
     containers:
