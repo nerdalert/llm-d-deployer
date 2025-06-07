@@ -7,6 +7,7 @@ metadata:
     helm.sh/hook: test
     helm.sh/hook-weight: "1" # Deploy after other resources, implicit weight is 0
 spec:
+  restartPolicy: Never
   securityContext:
     seccompProfile:
       type: RuntimeDefault
@@ -36,12 +37,14 @@ spec:
         - |
           echo -e "\e[32m🥷 Waiting for pods to come up\e[0m"
           echo ""
-          curl --connect-timeout 5 --max-time 20 --retry 20 --retry-delay 10 --retry-max-time 60 --retry-all-errors http://{{ include "gateway.fullname" . }}/v1/models
+          curl --connect-timeout 5 --max-time 20 --retry 20 --retry-delay 10 --retry-max-time 60 --retry-all-errors http://{{ include "gateway.fullname" . }}-istio/v1/models
 
           echo ""
           echo ""
           echo -e  "\e[32m🥷 Basic chat validation\e[0m"
           echo ""
-          curl --connect-timeout 5 --max-time 20 --retry 20 --retry-delay 10 --retry-max-time 60 --retry-all-errors http://{{ include "gateway.fullname" . }}/v1/chat/completions -H 'accept: application/json' -H 'Content-Type: application/json' -d '{"model":"food-review","messages": [{"content":"Say hi", "role": "user"}],"stream": false}'
-  restartPolicy: Never
+          curl --connect-timeout 5 --max-time 20 --retry 20 --retry-delay 10 --retry-max-time 60 --retry-all-errors http://{{ include "gateway.fullname" . }}-istio/v1/chat/completions \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -d '{"model":"food-review","messages":[{"content":"Say hi","role":"user"}],"stream":false}'
 {{- end }}
