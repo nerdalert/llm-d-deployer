@@ -47,6 +47,7 @@ jobs:
       TERMINATION_TIMEOUT: ${{ github.event.inputs.wait_for_termination }}
       PODS_READINESS_TIMEOUT: ${{ github.event.inputs.wait_for_pods }}
       DISK_SIZE: ${{ github.event.inputs.disk_size }}
+      PR_OR_BRANCH: ${{ github.event.inputs.pr_or_branch }}
 
     steps:
       - name: Checkout
@@ -57,7 +58,7 @@ jobs:
       - name: Determine if pr_or_branch is a PR number
         id: check_pr
         run: |
-          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
+          if [[ "$PR_OR_BRANCH" =~ ^[0-9]+$ ]]; then
             echo "is_pr=true" >> "$GITHUB_OUTPUT"
           else
             echo "is_pr=false" >> "$GITHUB_OUTPUT"
@@ -66,12 +67,12 @@ jobs:
       - name: Fetch and checkout PR
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
-          git fetch origin pull/${{ github.event.inputs.pr_or_branch }}/head:pr-${{ github.event.inputs.pr_or_branch }}
-          git checkout pr-${{ github.event.inputs.pr_or_branch }}
+          git fetch origin pull/"$PR_OR_BRANCH"/head:pr-"$PR_OR_BRANCH"
+          git checkout pr-"$PR_OR_BRANCH"
 
       - name: Checkout branch
         if: steps.check_pr.outputs.is_pr == 'false'
-        run: git checkout ${{ github.event.inputs.pr_or_branch }}
+        run: git checkout "$PR_OR_BRANCH"
 
       - name: Install AWS CLI
         run: |
