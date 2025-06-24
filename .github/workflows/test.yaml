@@ -118,3 +118,16 @@ jobs:
             --config ct-install.yaml \
             --upgrade \
             --target-branch "$TARGET_BRANCH"
+
+      - name: Dump diagnostics on failure
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: |
+          echo "### Pods (all namespaces)"; kubectl get pods -A -o wide
+          echo; echo "### istio-system pods"; kubectl get pods -n istio-system -o wide
+          echo; echo "### istiod deployment"; kubectl describe deployment istiod -n istio-system || true
+          echo; echo "### istiod endpoints"; kubectl get endpoints istiod -n istio-system -o wide || true
+          echo; echo "### istiod logs (current)"; kubectl logs -n istio-system deployment/istiod --tail=200 || true
+          echo; echo "### istiod logs (previous)"; kubectl logs -n istio-system deployment/istiod --previous --tail=200 || true
+          echo; echo "### Webhook config"; kubectl get validatingwebhookconfiguration istio-validator -o yaml | head -n 40 || true
+          echo; echo "### Recent events"; kubectl get events -A --sort-by=.lastTimestamp | tail -n 100
