@@ -425,8 +425,9 @@ install() {
   HF_KEY=$(yq -r .sampleApplication.model.auth.hfToken.key  "${VALUES_PATH}")
   $KCMD delete secret "${HF_NAME}" -n "${NAMESPACE}" --ignore-not-found
   $KCMD create secret generic "${HF_NAME}" \
+    --namespace "${NAMESPACE}" \
     --from-literal="${HF_KEY}=${HF_TOKEN}" \
-    --dry-run=client -o yaml | $KCMD apply -f -
+    --dry-run=client -o yaml | $KCMD apply -n "${NAMESPACE}" -f -
   log_success "HF token secret created"
 
   # can be fetched non-invasily if using kgateway or not
